@@ -68,7 +68,10 @@ class Banxcel:
     """
     def get_indicator(self, ind, gs = 'A'):
         df = self.data[ind].unstack()
-        return(df.loc[:, self.GOVS[gs].keys()])
+        govs = self.GOVS[gs]
+        govs = sorted(govs.keys(), key = lambda k: govs[k])
+        print(govs)
+        return(df.loc[:, govs])
 
 if __name__ == "__main__":
     banxcel = Banxcel("h:/ba/2017")
