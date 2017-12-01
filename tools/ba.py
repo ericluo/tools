@@ -70,7 +70,6 @@ class Banxcel:
         df = self.data[ind].unstack()
         govs = self.GOVS[gs]
         govs = sorted(govs.keys(), key = lambda k: govs[k])
-        print(govs)
         return(df.loc[:, govs])
 
 if __name__ == "__main__":
