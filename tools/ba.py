@@ -78,6 +78,22 @@ class Banxcel:
         govs = sorted(govs.keys(), key = lambda k: govs[k])
         return(df.loc[:, govs])
 
+    def plot_indicators(self, inds, gs = 'A'):
+        dfs = [self.data[ind].unstack() for ind in inds]
+        govs = self.GOVS[gs]
+        govs = sorted(govs.keys(), key = lambda k: govs[k])
+
+        figs = [df.loc[:, govs].iplot(asFigure = True) for df in dfs]
+        # layout = {'xaxis': {'tickformat': "%Y%m"},
+        #           'xaxis1': {'tickformat': "%Y%m"}
+        #           # 'yaxis': {'tickformat': ".2%"}
+        #          }
+        # base_layout=cf.tools.get_base_layout(figs)
+        sp = cf.subplots(figs)
+        sp['layout']['xaxis1']['tickformat'] = '%Y%m'
+        sp['layout']['xaxis2']['tickformat'] = '%Y%m'
+        cf.iplot(sp, legend=False)
+
     """ 抽取给定单个指标的时间序列，并计算增长率
 
         gs: 同上
@@ -85,7 +101,7 @@ class Banxcel:
             1  - 环比上月
             12 - 同比上年
     """
-    def get_indicator_chg_and_plot(self, ind, gs = 'A', ps = 12):
+    def plot_indicator_chg(self, ind, gs = 'A', ps = 12):
         df = self.get_indicator(ind, gs)
         df = df.pct_change(periods = ps).dropna()
 
