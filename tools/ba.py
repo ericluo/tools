@@ -1,12 +1,18 @@
 import pandas as pd
 import numpy as np
+pd.set_option('display.precision', 2)
+pd.set_option('display.float_format', '{:,.2f}'.format)
 
 from collections import ChainMap, namedtuple
 import os
 
-pd.set_option('display.precision', 2)
-pd.set_option('display.float_format', '{:,.2f}'.format)
-
+import plotly
+plotly.offline.init_notebook_mode(connected=True)
+import plotly.plotly as py
+import plotly.tools as tls
+import plotly.graph_objs as go
+import cufflinks as cf
+cf.set_config_file(offline=True, offline_link_text='', offline_show_link=False)
 
 """ Bank Report Processing like Excel
 
@@ -34,7 +40,7 @@ class Banxcel:
         self.data = []
         banks = self.ALL_BANKS
 
-        for p in pd.date_range(start_date, end_date, freq='M'):
+        for p in pd.date_range(start_date, end_date, freq='M').to_period():
             pdata = []
 
             for t in self.TABLES:
@@ -61,7 +67,7 @@ class Banxcel:
 
     """ 抽取给定单个指标的时间序列
 
-        govs: 按机构分组进行筛选并排序
+        gs: 按机构分组进行筛选并排序
             A - 所有机构
             D - 大型银行
             G - 股份制银行
@@ -71,6 +77,22 @@ class Banxcel:
         govs = self.GOVS[gs]
         govs = sorted(govs.keys(), key = lambda k: govs[k])
         return(df.loc[:, govs])
+
+    """ 抽取给定单个指标的时间序列，并计算增长率
+
+        gs: 同上
+        ps: 观测周期间隔期限
+            1  - 环比上月
+            12 - 同比上年
+    """
+    def get_indicator_chg_and_plot(self, ind, gs = 'A', ps = 12):
+        df = self.get_indicator(ind, gs)
+        df = df.pct_change(periods = ps).dropna()
+
+        fig = df.iplot(asFigure = True)
+        fig['layout']['yaxis1']['tickformat'] = ".2%"
+        fig['layout']['xaxis1']['tickformat'] = "%Y%m"
+        cf.iplot(fig)
 
 if __name__ == "__main__":
     banxcel = Banxcel("h:/ba/2017")
