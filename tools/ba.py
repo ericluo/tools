@@ -78,21 +78,22 @@ class Banxcel:
         govs = sorted(govs.keys(), key = lambda k: govs[k])
         return(df.loc[:, govs])
 
-    def plot_indicators(self, inds, gs = 'A'):
+    def plot_indicators_with_subplots(self, inds, gs = 'A'):
         dfs = [self.data[ind].unstack() for ind in inds]
         govs = self.GOVS[gs]
         govs = sorted(govs.keys(), key = lambda k: govs[k])
 
         figs = [df.loc[:, govs].iplot(asFigure = True) for df in dfs]
-        # layout = {'xaxis': {'tickformat': "%Y%m"},
-        #           'xaxis1': {'tickformat': "%Y%m"}
-        #           # 'yaxis': {'tickformat': ".2%"}
-        #          }
-        # base_layout=cf.tools.get_base_layout(figs)
+        for i, fig in enumerate(figs):
+            for trace in fig['data']:
+                trace['legendgroup'] = trace['name']
+                if( i != 0):
+                    trace['showlegend'] = False
+
         sp = cf.subplots(figs)
-        sp['layout']['xaxis1']['tickformat'] = '%Y%m'
-        sp['layout']['xaxis2']['tickformat'] = '%Y%m'
-        cf.iplot(sp, legend=False)
+        for i, fig in enumerate(figs):
+            sp['layout']['xaxis{}'.format(i + 1)]['tickformat'] = '%Y%m'
+        cf.iplot(sp)
 
     """ 抽取给定单个指标的时间序列，并计算增长率
 
@@ -109,6 +110,13 @@ class Banxcel:
         fig['layout']['yaxis1']['tickformat'] = ".2%"
         fig['layout']['xaxis1']['tickformat'] = "%Y%m"
         cf.iplot(fig)
+
+    """ share legend for across subplots
+
+        Refer to: <https://github.com/plotly/plotly.py/issues/800>
+    """
+    def single_legend_for_multiple_traces():
+        pass
 
 if __name__ == "__main__":
     banxcel = Banxcel("h:/ba/2017")
