@@ -14,12 +14,13 @@ import plotly.graph_objs as go
 import cufflinks as cf
 cf.set_config_file(offline=True, offline_link_text='', offline_show_link=False)
 
-""" Bank Report Processing like Excel
-
-    Bank Report Process tools like Excel.
-"""
 
 class Banxcel:
+
+    """ Bank Report Processing like Excel
+
+    Bank Report Process tools like Excel.
+    """
 
     DX_BANKS  = {"工商银行": 7, "农业银行": 8, "中国银行": 9, "建设银行": 10, "交通银行": 11}
     GFZ_BANKS = {'中信银行': 13, '平安银行': 17, '招商银行': 18, '浦发银行': 19, '兴业银行': 20, '民生银行': 21}
@@ -40,7 +41,7 @@ class Banxcel:
         self.data = []
         banks = self.ALL_BANKS
 
-        for p in pd.date_range(start_date, end_date, freq='M').to_period():
+        for p in pd.period_range(start_date, end_date, freq='M'):
             pdata = []
 
             for t in self.TABLES:
@@ -65,44 +66,51 @@ class Banxcel:
         self.data.reset_index(inplace=True)
         self.data.set_index(['期数', '机构名称'], inplace=True)
 
-    """ 抽取给定单个指标的时间序列
-
-        gs: 按机构分组进行筛选并排序
-            A - 所有机构
-            D - 大型银行
-            G - 股份制银行
-    """
     def get_indicator(self, ind, gs = 'A'):
+        """ 抽取给定单个指标的时间序列
+
+            gs: 按机构分组进行筛选并排序
+                A - 所有机构
+                D - 大型银行
+                G - 股份制银行
+        """
         df = self.data[ind].unstack()
+
         govs = self.GOVS[gs]
         govs = sorted(govs.keys(), key = lambda k: govs[k])
         return(df.loc[:, govs])
 
-    def plot_indicators_with_subplots(self, inds, gs = 'A'):
-        dfs = [self.data[ind].unstack() for ind in inds]
-        govs = self.GOVS[gs]
-        govs = sorted(govs.keys(), key = lambda k: govs[k])
+    def get_indicators(self, inds, gs = 'A'):
+        return([self.get_indicator(ind, gs) for ind in inds])
 
-        figs = [df.loc[:, govs].iplot(asFigure = True) for df in dfs]
+    def plot_indicators_with_subplots(self, inds, gs = 'A', chg = False, ps = 12):
+
+        dfs = self.get_indicators(inds, gs)
+        if(chg):
+            dfs = [df.pct_change(periods = ps).dropna() for df in dfs]
+
+        figs = [df.iplot(asFigure = True) for df in dfs]
         for i, fig in enumerate(figs):
             for trace in fig['data']:
                 trace['legendgroup'] = trace['name']
                 if( i != 0):
                     trace['showlegend'] = False
 
-        sp = cf.subplots(figs)
+        sp = cf.subplots(figs, subplot_titles = inds)
         for i, fig in enumerate(figs):
             sp['layout']['xaxis{}'.format(i + 1)]['tickformat'] = '%Y%m'
+            if(chg):
+                sp['layout'][f'yaxis{i + 1}']['tickformat'] = '.2%'
         cf.iplot(sp)
 
-    """ 抽取给定单个指标的时间序列，并计算增长率
-
-        gs: 同上
-        ps: 观测周期间隔期限
-            1  - 环比上月
-            12 - 同比上年
-    """
     def plot_indicator_chg(self, ind, gs = 'A', ps = 12):
+        """ 抽取给定单个指标的时间序列，并计算增长率
+
+            gs: 同上
+            ps: 观测周期间隔期限
+                1  - 环比上月
+                12 - 同比上年
+        """
         df = self.get_indicator(ind, gs)
         df = df.pct_change(periods = ps).dropna()
 
