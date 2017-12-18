@@ -26,30 +26,31 @@ def share_legend_for(figs):
             if( i != 0):
                 trace['showlegend'] = False
 
-def plot_data_with_subplots(dfs, sub_titles, title = None, xtf = None, is_yaxis_pct = False):
-    """ Plot dataframes with subplots
-
-    :dfs: dataframe to be plot
-    :titles: title for subplots
-    :xtf: tickformat for xaxis
-    :is_yaxis_pct: boolean, if the yaxis tickformat is perctage
-
-    """
-
+def plot_data_with_subplots(dfs, sub_titles, yoy = False, title = None,
+                            xformat = None, yformats = {}):
+    if(yoy):
+        dfs = [df.pct_change(periods = 12).dropna() for df in dfs]
+        for title in sub_titles:
+            if not (title in yformats):
+                yformats[title] = '.2%'
     # geneate figure data and share legend
     figs = [df.iplot(asFigure = True) for df in dfs]
     share_legend_for(figs)
 
     # config xaxis and yaxis tickformat
-    sp = cf.subplots(figs, subplot_titles = sub_titles, shared_xaxes = True)
+    # sp = cf.subplots(figs, subplot_titles = sub_titles, shared_xaxes = True)
+    sp = cf.subplots(figs, subplot_titles = sub_titles)
+
+    for i, fig in enumerate(figs):
+        if(sub_titles[i] in yformats):
+            fmt = yformats[sub_titles[i]]
+            sp['layout'][f'yaxis{i + 1}']['tickformat'] = fmt
+        sp['layout'][f'xaxis{i + 1}']['tickformat'] = xformat
+
+    # set title for the plot
     if(title):
         sp['layout'].update(title = title)
 
-    for i, fig in enumerate(figs):
-        if(xtf):
-            sp['layout'][f'xaxis{i + 1}']['tickformat'] = xtf
-        if(is_yaxis_pct):
-            sp['layout'][f'yaxis{i + 1}']['tickformat'] = '.2%'
     cf.iplot(sp)
 
 class Banxcel:
@@ -135,33 +136,22 @@ class Banxcel:
     def get_indicators(self, inds, gs = 'A'):
         return([self.get_indicator(ind, gs) for ind in inds])
 
-    def plot_indicators_with_subplots(self, inds, gs = 'A', chg = False, ps = 12):
+    def plot_indicators_with_subplots(self, inds, gs = 'A', yoy = False,
+                                        xformat = '%Y%m', yformats = {}):
 
         dfs = self.get_indicators(inds, gs)
-        if(chg):
-            dfs = [df.pct_change(periods = ps).dropna() for df in dfs]
-
-        plot_data_with_subplots(dfs, sub_titles = inds, xtf = '%Y%m', is_yaxis_pct = chg)
+        plot_data_with_subplots(dfs, inds, yoy = yoy, xformat = xformat, yformats = yformats)
 
 
-    def plot_indicator_with_subplots(self, ind, gs = 'A', chg = False, ps = 12):
-        """ 抽取给定单个指标的时间序列，并计算增长率
-
-            gs: 同上
-            ps: 观测周期间隔期限
-                1  - 环比上月
-                12 - 同比上年
-        """
+    def plot_indicator_with_subplots(self, ind, gs = 'A',
+                                        xformat = None, yformats = {}):
         df = self.get_indicator(ind, gs)
         banks = list(self.GOVS[gs].keys())
-
-        if(chg):
-            df = df.pct_change(periods = ps).dropna()
 
         df2 = df.set_index([df.index.month, df.index.year])
         dfs = [df2.unstack()[b] for b in banks]
 
-        plot_data_with_subplots(dfs, sub_titles = banks, title = ind, is_yaxis_pct = chg)
+        plot_data_with_subplots(dfs, banks, xformat = xformat, yformats = yformats, title = ind)
 
 
 if __name__ == "__main__":
