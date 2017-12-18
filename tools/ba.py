@@ -26,7 +26,7 @@ def share_legend_for(figs):
             if( i != 0):
                 trace['showlegend'] = False
 
-def plot_data_with_subplots(dfs, titles, xtf = None, is_yaxis_pct = False):
+def plot_data_with_subplots(dfs, sub_titles, title = None, xtf = None, is_yaxis_pct = False):
     """ Plot dataframes with subplots
 
     :dfs: dataframe to be plot
@@ -41,7 +41,10 @@ def plot_data_with_subplots(dfs, titles, xtf = None, is_yaxis_pct = False):
     share_legend_for(figs)
 
     # config xaxis and yaxis tickformat
-    sp = cf.subplots(figs, subplot_titles = titles, shared_xaxes = True)
+    sp = cf.subplots(figs, subplot_titles = sub_titles, shared_xaxes = True)
+    if(title):
+        sp['layout'].update(title = title)
+
     for i, fig in enumerate(figs):
         if(xtf):
             sp['layout'][f'xaxis{i + 1}']['tickformat'] = xtf
@@ -138,7 +141,7 @@ class Banxcel:
         if(chg):
             dfs = [df.pct_change(periods = ps).dropna() for df in dfs]
 
-        plot_data_with_subplots(dfs, titles = inds, xtf = '%Y%m', is_yaxis_pct = chg)
+        plot_data_with_subplots(dfs, sub_titles = inds, xtf = '%Y%m', is_yaxis_pct = chg)
 
 
     def plot_indicator_with_subplots(self, ind, gs = 'A', chg = False, ps = 12):
@@ -158,7 +161,7 @@ class Banxcel:
         df2 = df.set_index([df.index.month, df.index.year])
         dfs = [df2.unstack()[b] for b in banks]
 
-        plot_data_with_subplots(dfs, titles = banks, is_yaxis_pct = chg)
+        plot_data_with_subplots(dfs, sub_titles = banks, title = ind, is_yaxis_pct = chg)
 
 
 if __name__ == "__main__":
