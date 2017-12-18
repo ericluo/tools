@@ -15,6 +15,40 @@ import cufflinks as cf
 cf.set_config_file(offline=True, offline_link_text='', offline_show_link=False)
 
 
+def share_legend_for(figs):
+    """ share legend for across subplots
+
+        Refer to: <https://github.com/plotly/plotly.py/issues/800>
+    """
+    for i, fig in enumerate(figs):
+        for trace in fig['data']:
+            trace['legendgroup'] = trace['name']
+            if( i != 0):
+                trace['showlegend'] = False
+
+def plot_data_with_subplots(dfs, titles, xtf = None, is_yaxis_pct = False):
+    """ Plot dataframes with subplots
+
+    :dfs: dataframe to be plot
+    :titles: title for subplots
+    :xtf: tickformat for xaxis
+    :is_yaxis_pct: boolean, if the yaxis tickformat is perctage
+
+    """
+
+    # geneate figure data and share legend
+    figs = [df.iplot(asFigure = True) for df in dfs]
+    share_legend_for(figs)
+
+    # config xaxis and yaxis tickformat
+    sp = cf.subplots(figs, subplot_titles = titles, shared_xaxes = True)
+    for i, fig in enumerate(figs):
+        if(xtf):
+            sp['layout'][f'xaxis{i + 1}']['tickformat'] = xtf
+        if(is_yaxis_pct):
+            sp['layout'][f'yaxis{i + 1}']['tickformat'] = '.2%'
+    cf.iplot(sp)
+
 class Banxcel:
 
     """ Bank Report Processing like Excel
@@ -66,6 +100,21 @@ class Banxcel:
         self.data.reset_index(inplace=True)
         self.data.set_index(['期数', '机构名称'], inplace=True)
 
+        self.init_indicators()
+
+    def init_indicators(self):
+        self.data['逾期贷款率'] = self.data['逾期贷款'] / self.data['各项贷款余额']
+        self.data['90天以上逾期贷款率'] = self.data['逾期90天以上'] / self.data['各项贷款余额']
+        self.data['不良贷款率'] = self.data['不良贷款余额'] / self.data['各项贷款余额']
+        self.data['核销率'] = self.data['冲销卖出'] / self.data['各项贷款余额']
+        self.data['核销前关注不良率'] = (self.data['关注类贷款'] + self.data['不良贷款余额'] + self.data['冲销卖出']) / self.data['各项贷款余额']
+        self.data['核销前逾期贷款率'] = (self.data['逾期90天以上'] + self.data['冲销卖出']) / self.data['各项贷款余额']
+        self.data['拨备覆盖率'] = self.data['贷款损失准备'] / self.data['不良贷款余额']
+        self.data['拨贷率'] = self.data['贷款损失准备'] / self.data['各项贷款余额']
+        self.data['关注+不良贷款占比'] = (self.data['关注类贷款'] + self.data['不良贷款余额']) / self.data['各项贷款余额']
+
+        self.data['拨备前利润'] = self.data['本年利润'] / 0.75 + self.data['新提准备金']
+
     def get_indicator(self, ind, gs = 'A'):
         """ 抽取给定单个指标的时间序列
 
@@ -89,21 +138,10 @@ class Banxcel:
         if(chg):
             dfs = [df.pct_change(periods = ps).dropna() for df in dfs]
 
-        figs = [df.iplot(asFigure = True) for df in dfs]
-        for i, fig in enumerate(figs):
-            for trace in fig['data']:
-                trace['legendgroup'] = trace['name']
-                if( i != 0):
-                    trace['showlegend'] = False
+        plot_data_with_subplots(dfs, titles = inds, xtf = '%Y%m', is_yaxis_pct = chg)
 
-        sp = cf.subplots(figs, subplot_titles = inds)
-        for i, fig in enumerate(figs):
-            sp['layout']['xaxis{}'.format(i + 1)]['tickformat'] = '%Y%m'
-            if(chg):
-                sp['layout'][f'yaxis{i + 1}']['tickformat'] = '.2%'
-        cf.iplot(sp)
 
-    def plot_indicator_chg(self, ind, gs = 'A', ps = 12):
+    def plot_indicator_with_subplots(self, ind, gs = 'A', chg = False, ps = 12):
         """ 抽取给定单个指标的时间序列，并计算增长率
 
             gs: 同上
@@ -112,19 +150,16 @@ class Banxcel:
                 12 - 同比上年
         """
         df = self.get_indicator(ind, gs)
-        df = df.pct_change(periods = ps).dropna()
+        banks = list(self.GOVS[gs].keys())
 
-        fig = df.iplot(asFigure = True)
-        fig['layout']['yaxis1']['tickformat'] = ".2%"
-        fig['layout']['xaxis1']['tickformat'] = "%Y%m"
-        cf.iplot(fig)
+        if(chg):
+            df = df.pct_change(periods = ps).dropna()
 
-    """ share legend for across subplots
+        df2 = df.set_index([df.index.month, df.index.year])
+        dfs = [df2.unstack()[b] for b in banks]
 
-        Refer to: <https://github.com/plotly/plotly.py/issues/800>
-    """
-    def single_legend_for_multiple_traces():
-        pass
+        plot_data_with_subplots(dfs, titles = banks, is_yaxis_pct = chg)
+
 
 if __name__ == "__main__":
     banxcel = Banxcel("h:/ba/2017")
