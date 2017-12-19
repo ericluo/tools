@@ -30,14 +30,15 @@ def plot_data_with_subplots(dfs, sub_titles, yoy = False, title = None,
                             xformat = None, yformats = {}):
     if(yoy):
         dfs = [df.pct_change(periods = 12).dropna() for df in dfs]
-        for title in sub_titles:
-            if not (title in yformats):
-                yformats[title] = '.2%'
+        for st in sub_titles:
+            if not (st in yformats):
+                yformats[st] = '.2%'
     # geneate figure data and share legend
     figs = [df.iplot(asFigure = True) for df in dfs]
     share_legend_for(figs)
 
     # config xaxis and yaxis tickformat
+    # TODO fix the bug the plot wrong when share xaxes.
     # sp = cf.subplots(figs, subplot_titles = sub_titles, shared_xaxes = True)
     sp = cf.subplots(figs, subplot_titles = sub_titles)
 
