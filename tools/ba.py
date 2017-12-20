@@ -39,6 +39,7 @@ def plot_data_with_subplots(dfs, sub_titles, yoy = False, title = None,
 
     # config xaxis and yaxis tickformat
     # TODO fix the bug the plot wrong when share xaxes.
+    #      maybe when share axes, conflict with the following config of xaxis' tickformat
     # sp = cf.subplots(figs, subplot_titles = sub_titles, shared_xaxes = True)
     sp = cf.subplots(figs, subplot_titles = sub_titles)
 
