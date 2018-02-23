@@ -174,7 +174,7 @@ class Banxcel:
         share_legend_for(figs)
 
         # config xaxis and yaxis tickformat
-        figs = cf.subplots(figs, shared_xaxes = True)
+        figs = cf.subplots(figs, shared_xaxes = True, subplot_titles = banks)
         set_tickformat(figs, xformat, yformat)
         # set title for the plot
         figs['layout'].update(title = ind)
