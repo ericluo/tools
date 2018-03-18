@@ -73,12 +73,27 @@ class Banxcel:
     Table = namedtuple('Table', ['name', 'indicators'])
     FIVE_CLASS = Table("贷款质量五级分类情况表", {
         '各项贷款余额': 0, '正常贷款余额': 4, '关注类贷款': 8, '不良贷款余额': 12,
-        '次级类贷款': 16, '可疑类贷款': 20, '损失类贷款': 24, '逾期贷款': 28, '逾期90天以上': 32})
+        '次级类贷款': 16, '可疑类贷款': 20, '损失类贷款': 24, '逾期贷款': 28, '逾期90天以上': 32
+    })
+
     RESERVE = Table("资产减值准备情况表", {'贷款损失准备': 0, '新提准备金': 1, "冲销卖出": 2})
+
+    RESERVE2 = Table("资产减值准备运用情况表", {
+        '各项减值准备': 0, '新提各项减值损失': 4, "各项减值冲销卖出": 6,
+        "贷款减值准备": 8, '新提贷款减值损失': 12, '贷款减值冲销卖出': 14,
+        '拨备覆盖率': 16, '拨贷率': 20,
+        '其他减值准备': 24, '新提其他减值损失': 28, '其他减值冲销卖出': 30
+    })
+
     BALANCE = Table("资产负债及存贷款情况简表", {
-        '资产总额': 0, '负债总额': 6, '所有者权益': 12, '各项贷款': 17,
-        '贴现及转贴现': 23,  '各项存款': 28, '单位存款': 34, '储蓄存款': 39, '本年利润': 44})
-    TABLES = [FIVE_CLASS, RESERVE, BALANCE]
+        '资产总额': 0, '负债总额': 6, '所有者权益': 12, '本年利润': 44
+    })
+
+    CDETAIL = Table("存贷款明细分析表", {
+        '各项贷款': 0, '短期贷款': 4, '中长期贷款': 8, '贴现及转贴现': 12, '贸易融资': 16,
+        '各项存款': 20, '单位存款': 24, '个人存款': 28, '国库定期存款': 32, '临时性存款': 36
+    })
+    TABLES = [FIVE_CLASS, RESERVE, BALANCE, RESERVE2, CDETAIL]
 
     def __init__(self, data_path, start_date = '20151231', end_date = '20171231'):
         self.data = []
@@ -117,10 +132,10 @@ class Banxcel:
         self.data['关注贷款率'] = self.data['关注类贷款'] / self.data['各项贷款余额']
         self.data['不良贷款率'] = self.data['不良贷款余额'] / self.data['各项贷款余额']
         self.data['核销率'] = self.data['冲销卖出'] / self.data['各项贷款余额']
-        self.data['核销前关注不良率'] = (self.data['关注类贷款'] + self.data['不良贷款余额'] + self.data['冲销卖出']) / self.data['各项贷款余额']
-        self.data['核销前逾期贷款率'] = (self.data['逾期90天以上'] + self.data['冲销卖出']) / self.data['各项贷款余额']
-        self.data['拨备覆盖率'] = self.data['贷款损失准备'] / self.data['不良贷款余额']
-        self.data['拨贷率'] = self.data['贷款损失准备'] / self.data['各项贷款余额']
+        self.data['核销前关注不良率'] = (self.data['关注类贷款'] + self.data['不良贷款余额'] + self.data['贷款减值冲销卖出']) / self.data['各项贷款余额']
+        self.data['核销前逾期贷款率'] = (self.data['逾期90天以上'] + self.data['贷款减值冲销卖出']) / self.data['各项贷款余额']
+        # self.data['拨备覆盖率'] = self.data['贷款损失准备'] / self.data['不良贷款余额']
+        # self.data['拨贷率'] = self.data['贷款损失准备'] / self.data['各项贷款余额']
         self.data['关注+不良贷款占比'] = (self.data['关注类贷款'] + self.data['不良贷款余额']) / self.data['各项贷款余额']
 
         self.data['拨备前利润'] = self.data['本年利润'] / 0.75 + self.data['新提准备金']
