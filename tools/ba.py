@@ -65,31 +65,31 @@ class Banxcel:
     Bank Report Process tools like Excel.
     """
 
-    DX_BANKS  = {"工商银行": 7, "农业银行": 8, "中国银行": 9, "建设银行": 10, "交通银行": 11}
-    GFZ_BANKS = {'中信银行': 13, '平安银行': 17, '招商银行': 18, '浦发银行': 19, '兴业银行': 20, '民生银行': 21}
+    DX_BANKS  = {"工商银行": 5, "农业银行": 6, "中国银行": 7, "建设银行": 8, "交通银行": 9}
+    GFZ_BANKS = {'中信银行': 11, '平安银行': 15, '招商银行': 16, '浦发银行': 17, '兴业银行': 18, '民生银行': 19}
     ALL_BANKS = ChainMap(DX_BANKS, GFZ_BANKS)
     GOVS = {"D": DX_BANKS, "G": GFZ_BANKS, "A": ALL_BANKS}
 
-    Table = namedtuple('Table', ['name', 'indicators'])
-    FIVE_CLASS = Table("贷款质量五级分类情况表", {
+    Table = namedtuple('Table', ['name', 'skiprows', 'indicators'])
+    FIVE_CLASS = Table("贷款质量五级分类情况表", 3, {
         '各项贷款余额': 0, '正常贷款余额': 4, '关注类贷款': 8, '不良贷款余额': 12,
         '次级类贷款': 16, '可疑类贷款': 20, '损失类贷款': 24, '逾期贷款': 28, '逾期90天以上': 32
     })
 
-    RESERVE = Table("资产减值准备情况表", {'贷款损失准备': 0, '新提准备金': 1, "冲销卖出": 2})
+    RESERVE = Table("资产减值准备情况表", 3, {'贷款损失准备': 0, '新提准备金': 1, "冲销卖出": 2})
 
-    RESERVE2 = Table("资产减值准备运用情况表", {
+    RESERVE2 = Table("资产减值准备运用情况表", 3, {
         '各项减值准备': 0, '新提各项减值损失': 4, "各项减值冲销卖出": 6,
         "贷款减值准备": 8, '新提贷款减值损失': 12, '贷款减值冲销卖出': 14,
         '拨备覆盖率': 16, '拨贷率': 20,
         '其他减值准备': 24, '新提其他减值损失': 28, '其他减值冲销卖出': 30
     })
 
-    BALANCE = Table("资产负债及存贷款情况简表", {
+    BALANCE = Table("资产负债及存贷款情况简表", 3, {
         '资产总额': 0, '负债总额': 6, '所有者权益': 12, '本年利润': 44
     })
 
-    CDETAIL = Table("存贷款明细分析表", {
+    CDETAIL = Table("存贷款明细分析表", 2, {
         '各项贷款': 0, '短期贷款': 4, '中长期贷款': 8, '贴现及转贴现': 12, '贸易融资': 16,
         '各项存款': 20, '单位存款': 24, '个人存款': 28, '国库定期存款': 32, '临时性存款': 36
     })
@@ -106,7 +106,7 @@ class Banxcel:
                 f = "{}/{:4d}{:02d}_{}.xls".format(data_path, p.year, p.month, t.name)
 
                 if(os.path.exists(f)):
-                    df = pd.read_excel(f, index_col=0)
+                    df = pd.read_excel(f, index_col=0, header = None, skiprows = t.skiprows)
                     df = df.iloc[list(banks.values()), list(t.indicators.values())]
                     df.columns = t.indicators.keys()
                     df.index = banks.keys()
