@@ -138,7 +138,8 @@ class Banxcel:
         # self.data['拨贷率'] = self.data['贷款损失准备'] / self.data['各项贷款余额']
         self.data['关注+不良贷款占比'] = (self.data['关注类贷款'] + self.data['不良贷款余额']) / self.data['各项贷款余额']
 
-        self.data['拨备前利润'] = self.data['本年利润'] / 0.75 + self.data['新提准备金']
+        # 将净利润还原到税前利润
+        self.data['拨备前利润'] = self.data['本年利润'] / 0.75 + self.data['新提各项减值损失']
 
     def get_indicator(self, ind, gs = 'A'):
         """ 抽取给定单个指标的时间序列
