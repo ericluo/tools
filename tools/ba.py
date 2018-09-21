@@ -119,7 +119,7 @@ class Banxcel:
 
                 self.data.append(dff)
 
-        self.data = pd.concat(self.data)
+        self.data = pd.concat(self.data, sort=False)
         self.data.index.name = '机构名称'
         self.data.reset_index(inplace=True)
         self.data.set_index(['期数', '机构名称'], inplace=True)
